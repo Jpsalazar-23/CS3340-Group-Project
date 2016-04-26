@@ -1,11 +1,7 @@
 .data  
 file: .asciiz "input.asm"      # filename for input
-newline: .byte 0x0A
-comma: .byte 0x2C
-period: .byte 0x2E
-colon: .byte 0x3A
-space: .byte 0x20
-hashtag: .byte 0x23
+characters: .byte 0x0A, 0X2C, 0x2E, 0x3A, 0x20, 0x23
+	# newline, comma, period, colon, space, hashtag
 zero: .byte 0x00
 buffer: .space 2048
 line: .space 256
@@ -32,15 +28,16 @@ move $a0, $s6      # file descriptor to close
 syscall            # close file
 
 la $a1, buffer        # pass address of str1
-la $a2, newline       # pass address of str2
-jal getLine      # call methodComp
+la $a3, characters       # pass address of str2
+jal getLine1      # call methodComp
 
-getLine:  
-la $s0,line
-add $t0,$a1,$zero
-lb $t2, 0($a2)
+getLine1:  
+add $t0,$a1,$zero # DO NOT OVERWRITE $t0
+getLine2:
+la $s0, line
+lb $t2, 0($a3) # $t2 is newline
 loop:  
-lb $t1($t0)         # load a byte from each string  
+lb $t1($t0)         # load a byte from string  
 beqz $t1, endLine    # str1 end
 addi $t0, $t0,1      # t1 points to the next byte of str1
 beq $t1,$t2, foundNewline    # compare two bytes
@@ -53,24 +50,24 @@ jal handleLine
 j clearLineBuffer
 
 handleLine:
-la $s0, ($a0)
+la $s6, ($a0)
 la $s7, ($a0)
-lb $t3, hashtag
-lb $t4, comma
-lb $t5, period
-lb $t6, colon
-lb $t7, space
 add $t8, $zero, $zero
 add $t9, $zero, $zero
 loop2:  
-lb $t1($s0)         # load a byte from each string  
+lb $t1($s6)         # load a byte from each string  
 beqz $t1, handleInstruction   # str1 end
-addi $s0, $s0, 1     # t1 points to the next byte of str1
-beq $t1, $t3, handleHashtag
-beq $t1,$t4, handleSpaceOrComma
-beq $t1,$t5, handleDirective
-beq $t1, $t6, handleLabel
+addi $s6, $s6, 1     # t1 points to the next byte of str1
+lb $t7, 5($a3) # hashtag
+beq $t1, $t7, handleHashtag
+lb $t7, 1($a3) # comma
+beq $t1,$t7, handleSpaceOrComma
+lb $t7, 4($a3) # space
 beq $t1, $t7, handleSpaceOrComma
+lb $t7, 2($a3) # period
+beq $t1,$t7, handleDirective
+lb $t7, 3($a3) # colon
+beq $t1, $t7, handleLabel
 add $t8, $zero, $zero
 j loop2
 handleSpaceOrComma:
@@ -111,8 +108,7 @@ addi $t7, $t7, 1
 beq $t7, $t8, break3
 j loop3
 break3:
-la $s0, line
-j loop
+j getLine2
 
 endLine:
 la $a0, line
