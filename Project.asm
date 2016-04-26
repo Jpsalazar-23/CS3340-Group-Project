@@ -5,6 +5,7 @@ characters: .byte 0x0A, 0X2C, 0x2E, 0x3A, 0x20, 0x23
 zero: .byte 0x00
 buffer: .space 2048
 line: .space 256
+writeBuffer: .space 2048
 lineBufferSize: .word 255
 .text
 #open a file for reading
