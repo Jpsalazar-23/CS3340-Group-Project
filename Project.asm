@@ -49,6 +49,10 @@ foundNewline:
 la $a0, line
 jal handleLine
 j clearLineBuffer
+endLine: # handle last line and then write the output
+la $a0, line
+jal handleLine
+j endFile
 
 handleLine:
 la $s6, ($a0)
@@ -111,11 +115,6 @@ j loop3
 break3:
 j getLine2
 
-endLine:
-la $a0, line
-jal handleLine
-j endFile
-
-endFile:
+endFile: # could possibly write new file here
 li $v0, 10  # exit program
 syscall
